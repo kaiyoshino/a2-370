@@ -1,0 +1,96 @@
+---
+title: "Assignment 2: Data Wrangling - Metropolitan Segregation"
+output: pdf_document
+---
+
+#### Kai Yoshino
+##### Info 370
+
+```{r, echo=FALSE}
+  knitr::opts_chunk$set(echo = TRUE)
+  library(knitr)
+  library(ggplot2)
+  library(reshape)
+```
+
+### Introduction
+
+The purpose of this assignment was to aggregate and interpret an metropolitan demographics data set in order to measure segregation of each city within it. The dataset included 14 different cities. For each city, I calculated four different metrics that measure different aspects of segregation. I will go over my calulations, show how they measure segregation, and how the results for each city compare to the rest.
+
+### Dissimilarity
+
+First I measured the Dissimilarity index. This measures what percentage of the population of a city would have to move for each neighborhood to have an equal ratio of white to non white residents. Having high dissimilairty is a common indicator of segregation. The formula is as shown.
+
+$$ \frac{\sum\limits_{\substack{i=1}}^n[t_i|p_i - P|]} { [2TP(1-P)] } $$
+
+To calculate you take the sum of the total population (${t_i}$), multiplied by the absolute value of the ratio of minority population to the total population (${p_i}$) for each area, minus that ratio for the whole city(${P}$), then divide that sum by two, multiplied by the total population, multiplied by the $P$, and $1-P$
+
+
+```{r, echo=FALSE}
+results$city <- with(results, reorder(city, dissimilarity))
+ggplot(data=results, aes(x=city, y=dissimilarity)) + geom_point(size=4) + theme(axis.text.x = element_text(angle = 40, hjust = 1))
+```
+
+We see from the plot that Oklohoma City has the least dissimilarity, and Milwaukee has the most.
+
+### Interaction
+
+Next I looked at interaction. This measures the probability that a minority person shares a neighborhood with a majority group person. Having a low measure of interaction is a sign of segregation.
+
+$${\sum\limits_{\substack{i=1}}^n[(\frac{x_i}X)(\frac{y_i}{t_i})]} $$
+
+To calculate I took the sum of the minority population of each area ($x_i$), divided by the minority population of the city($X$), multiplied by the majority population of each area ($y_i$), divided by $t_i$.
+
+```{r, echo=FALSE}
+results$city <- with(results, reorder(city, -interaction))
+ggplot(data=results, aes(x=city, y=interaction)) + geom_point(size=4) + theme(axis.text.x = element_text(angle = 40, hjust = 1))
+```
+
+This measure shows Baltimore having the least interaction and Denver having the most.
+
+### Clustering
+
+Next I looked at Relative Clustering, which measures the average distance between minority members with the average distance between majority members. Having a positive clustering measure means that minorities display greater clustering than the majority and having negative means the majority clusters more, clustering of 0 means both gourps cluster equally. This metric is a bit more interesting because it gives context to how cities might be segregated, weighting segregation of the minority or majority groups. It doesn't as easily compare to the other metrics I have looked at here, but gives more context.
+
+$$(\frac{P_{xx}}{P_{yy}}) - 1 $$
+
+This metric is calculated by taking the ratio of ratio of the entire city that is in the minority (${P_{xx}}$), then divide it by the ratio of the city's population that is in the majority (${P_{yy}}$), and subtract one from it.
+
+
+```{r, echo=FALSE}
+results$city <- with(results, reorder(city, clustering))
+ggplot(data=results, aes(x=city, y=clustering)) + geom_point(size=4) + theme(axis.text.x = element_text(angle = 40, hjust = 1))
+```
+
+This measure Syracuse having the most majority clustering, Baltimore with the most minority clustering, and Chicago with the most unifrom amount of any clustering.
+
+### Metric Proposal
+
+Finally, I implemented my own metric for segregation: average difference in group population percentages. This measures the average difference between percentage populations between minority and majority groups in a given neighborhood. Having a high difference means that neighborhoods of that city are not diverse.
+
+$$\frac{\sum\limits_{\substack{i=1}}^n|{p_i} -  z_i|} {n}$$
+
+To calculate this metric you simply take the sum of the differences between the percentage of minority population ($p_i$) and percentage of majority population for each neighborhood ($z_i$), then divide that sum by the total number of neighborhoods.
+
+```{r, echo=FALSE}
+results$city <- with(results, reorder(city, difference))
+ggplot(data=results, aes(x=city, y=difference, )) + geom_point(size=4) + theme(axis.text.x = element_text(angle = 40, hjust = 1))
+```
+
+Above is how each city measured up with my metric. Some of the ordering is similar to dissimilarity and inversely to interaction. You can see this below where I plot all the metrics together. While it does give another dimension to the data, it is also reinforcing how the other measuremnts ranked a city's segregation.
+
+### Analysis of Results
+
+Lets take a look at how all of these metrics stack up with each other.
+
+```{r, echo=FALSE}
+results$city <- with(results, reorder(city, dissimilarity))
+results.melt <- melt(results, id.var=1)
+ggplot(data=results.melt, aes(x=city, y=value, colour=variable)) + geom_point(size=5, alpha = 0.6) + theme(axis.text.x = element_text(angle = 40, hjust = 1))
+```
+```{r}
+kable(results)
+```
+
+
+All of these metrics provide us with another way to look at segregation. And even still, the amount of ways people choose or discover how to measure segregation changes and grows each year. This is good, and important, for data scientists and statisticians to expand how we measure something can be somewhat subjective.
